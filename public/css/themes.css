@@ -1,0 +1,108 @@
+﻿/* ============================================================
+   《入戏》双主题系统
+   🌙 night  夜读 —— 深夜书房，烛光微暖，沉浸读故事
+   📜 paper  素笺 —— 宣纸墨色，盐言调性，翻一本会动的小说
+   ============================================================ */
+
+/* ---------- 全局动效令牌（舞台节奏统一） ---------- */
+:root {
+  --ease-drama: cubic-bezier(0.22, 1, 0.36, 1);   /* 开幕/入场：先急后缓 */
+  --ease-hush: cubic-bezier(0.4, 0, 0.2, 1);      /* 安静过渡 */
+  --dur-fast: 0.28s;
+  --dur-mid: 0.45s;
+  --dur-slow: 0.7s;
+}
+
+/* ---------- 🌙 夜读（暗色沉浸） ---------- */
+:root[data-theme="night"] {
+  /* 底色层次 */
+  --bg-base: #0b0d13;
+  --bg-deep: #080a0f;
+  --bg-panel: #141824;
+  --bg-panel-soft: #191e2c;
+  --bg-hover: #1e2434;
+
+  /* 文字 */
+  --text-hi: #ece7db;
+  --text-mid: #b8bdc9;
+  --text-dim: #7a8194;
+  --text-faint: #4d5464;
+
+  /* 烛光金强调 */
+  --accent: #d4a373;
+  --accent-bright: #e8c39a;
+  --accent-dim: rgba(212, 163, 115, 0.14);
+  --accent-glow: rgba(212, 163, 115, 0.35);
+
+  /* 线与边 */
+  --border: rgba(212, 175, 122, 0.16);
+  --border-strong: rgba(212, 175, 122, 0.34);
+  --hairline: rgba(255, 255, 255, 0.06);
+
+  /* 状态色 */
+  --danger: #c96f5e;
+  --ok: #7fa87f;
+
+  /* 遮罩 */
+  --overlay: rgba(5, 6, 10, 0.72);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  --glow-shadow: 0 0 24px var(--accent-dim), 0 0 64px rgba(212, 163, 115, 0.08);
+
+  /* 纹理：极淡噪点 */
+  --texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+
+  /* 标题：思源宋 900 金石感；正文：霞鹜文楷书卷气；回退本地宋体 */
+  --font-title: "Noto Serif SC", "Source Han Serif SC", "STZhongsong", "SimSun", serif;
+  --font-body: "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+  --font-ui: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+/* ---------- 📜 素笺（书卷纸张） ---------- */
+:root[data-theme="paper"] {
+  --bg-base: #f2ecdf;
+  --bg-deep: #e9e2d2;
+  --bg-panel: #faf6ec;
+  --bg-panel-soft: #f5f0e3;
+  --bg-hover: #f0e9d9;
+
+  --text-hi: #2e2a23;
+  --text-mid: #57503f;
+  --text-dim: #8a8271;
+  --text-faint: #b3aa96;
+
+  /* 朱砂强调 */
+  --accent: #a03a2f;
+  --accent-bright: #b8524a;
+  --accent-dim: rgba(160, 58, 47, 0.10);
+  --accent-glow: rgba(160, 58, 47, 0.22);
+
+  --border: rgba(90, 78, 56, 0.22);
+  --border-strong: rgba(90, 78, 56, 0.42);
+  --hairline: rgba(60, 50, 35, 0.08);
+
+  --danger: #9c3d2e;
+  --ok: #5c7a52;
+
+  --overlay: rgba(236, 228, 210, 0.88);
+  --card-shadow: 0 6px 24px rgba(90, 78, 56, 0.14), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  --glow-shadow: 0 0 20px var(--accent-dim);
+
+  /* 纸张纤维纹 */
+  --texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.4 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23p)'/%3E%3C/svg%3E");
+
+  --font-title: "Noto Serif SC", "Source Han Serif SC", "STZhongsong", "SimSun", serif;
+  --font-body: "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+  --font-ui: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+/* ---------- 主题过渡 ---------- */
+body,
+.panel,
+.btn,
+.card,
+.dialog-box,
+.choice-btn {
+  transition: background-color 0.45s ease, color 0.45s ease,
+    border-color 0.45s ease, box-shadow 0.45s ease;
+}
+

@@ -1,0 +1,13 @@
+{
+  "name": "ruxi-theater",
+  "version": "0.1.0",
+  "private": true,
+  "description": "入戏 · 知乎故事互动剧场 —— 知乎黑客松 2026 校园新锐季参赛作品",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs",
+    "images": "node scripts/convert-images.mjs"
+  }
+}

@@ -1,0 +1,20 @@
+# .gitignore —— 密钥与运行时产物绝不进仓库
+.env
+node_modules/
+
+# 运行时写入
+data/analytics/
+
+# 官方授权内容（仅限比赛演示，不入开源库）：改编剧本 + 封面图
+data/plays/
+public/assets/covers/
+public/assets/covers_small/
+
+# 备份与生成物
+data/plays_backup_*/
+data/stories/
+qa-*.png
+*.log
+
+# 离线分享包（build-standalone.mjs 生成，体积大且可随时重建）
+入戏-离线分享版.html

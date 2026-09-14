@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="night">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>入戏 · 知乎故事互动剧场</title>
+<meta name="description" content="每个知乎故事，都能变成一场你可以亲自入场的戏。入戏扮演，改写结局。">
+<link rel="stylesheet" href="/css/themes.css">
+<link rel="stylesheet" href="/css/main.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23a03a2f'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='%23f4efe4' font-family='serif' font-weight='bold'%3E戏%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<!-- 顶栏 -->
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand" id="brandHome" title="回到大厅" role="button" tabindex="0" aria-label="返回大厅">
+      <span class="brand-seal">戏</span>
+      <span class="brand-art">入戏<i>·</i>剧场</span>
+      <span class="brand-sub">知乎故事互动剧场</span>
+    </div>
+    <div class="topbar-actions" style="display:flex;align-items:center;gap:10px">
+      <button class="save-entry" id="saveMgrBtn" title="存档 · 剧情与 AI 演绎通用 · 最多 5 档">💾 存档</button>
+      <div class="theme-switch" id="themeSwitch" title="切换主题">
+        <button data-t="night">🌙 夜读</button>
+        <button data-t="paper">📜 素笺</button>
+      </div>
+      <button class="sound-btn" id="codexBtn" title="图鉴 · 结局与成就收集册" aria-label="打开图鉴">📖</button>
+      <button class="sound-btn" id="soundToggle" title="音效开关" aria-label="切换音效">🔊</button>
+    </div>
+  </div>
+</header>
+
+<!-- 视图 1：大厅（检票口 + 演示台 + 分类海报栏） -->
+<main id="view-hall" class="view active">
+  <section class="wrap hall-hero" aria-labelledby="hallHeroTitle">
+    <div class="hero-kicker">知乎故事 · 互动剧场</div>
+    <h1 id="hallHeroTitle">把故事变成一场<br><em>你亲自入场的戏</em></h1>
+    <p>选择一篇故事，做出你的抉择；或者让命运替你随机开一场。</p>
+    <div class="hero-actions">
+      <button class="btn primary" id="randomPlayBtn" type="button" disabled aria-disabled="true">随机入戏 <span aria-hidden="true">↗</span></button>
+      <span class="hero-meta" id="heroMeta">正在检票 · 故事目录加载中</span>
+    </div>
+  </section>
+  <div class="wrap hall-top">
+    <div class="hall-resume" id="hallResume" style="display:none">
+      <span class="pulse"></span>
+      <div class="txt" id="hallResumeTxt"></div>
+      <button class="go" id="hallResumeGo">继续看戏 →</button>
+    </div>
+
+    <div class="hall-demo gold-ring">
+      <div class="hd-top">
+        <span class="hd-tag">现 场 演 示</span>
+        <span class="hd-name" id="demoName"></span>
+      </div>
+      <div class="hd-scene" id="demoScene" aria-live="polite"><span class="hd-caret"></span></div>
+      <div class="hd-ops">
+        <div class="hd-op" id="demoOpA"></div>
+        <div class="hd-op" id="demoOpB"></div>
+      </div>
+      <div class="hd-ends">
+        <div class="hd-end" id="demoEndA"></div>
+        <div class="hd-end" id="demoEndB"></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="wrap">
+    <div id="hallGroups"><!-- 分组由 hall.js 渲染 --></div>
+    <p class="provenance">故事内容来自知乎 · 盐言故事（知乎黑客松 2026 官方授权）· 版权归原作者所有，仅限比赛演示</p>
+  </section>
+</main>
+
+<!-- 视图 1b：图鉴（结局与成就收集册） -->
+<main id="view-codex" class="view">
+  <section class="wrap" style="padding-top:40px">
+    <div style="text-align:right"><button class="back-btn" id="btnBackGame" style="display:none">← 返回剧场</button></div>
+    <div class="codex-head">
+      <h2 class="codex-title">图 鉴</h2>
+      <p class="codex-sub">达成过的结局与成就在此留档；未解锁的，还是一个谜。</p>
+      <div class="codex-pills" id="codexPills"></div>
+    </div>
+    <div id="codexBody"></div>
+    <p class="provenance" style="padding-top:32px">结局与成就在游玩中达成 · 多结局需要不同的抉择路线 · 隐藏成就不会预告触发条件</p>
+  </section>
+</main>
+
+<!-- 视图 2：游玩（滚动对话流） -->
+<main id="view-game" class="view stage">
+  <div class="stage-bg" id="stageBg"></div>
+  <div class="stage-veil"></div>
+  <div class="stage-top">
+    <div class="stage-title" id="stageTitle">…</div>
+    <div class="act-dots" id="actDots"></div>
+    <button class="back-btn" id="btnBack">← 退出剧场</button>
+  </div>
+
+  <!-- 可滚动的剧情流：过去情节可上下滑动回看 -->
+  <div class="stream" id="stream">
+    <div class="stream-inner" id="streamInner"></div>
+  </div>
+
+  <!-- 底部固定操作区 -->
+  <div class="input-bar" id="inputBar">
+    <div class="choices-inline" id="choiceBox"></div>
+    <div class="free-row">
+      <input type="text" id="freeInput" maxlength="80" placeholder="对角色说点什么……（AI 即兴接话，不改变主线）">
+      <button class="free-send" id="freeSend">开口</button>
+    </div>
+  </div>
+</main>
+
+<!-- 模式选择（剧情 / AI 演绎）：撕票式票根 -->
+<div class="mode-overlay" id="modeOverlay" role="dialog" aria-modal="true" aria-labelledby="modeStory">
+  <div class="mode-card">
+    <div class="mode-kicker">选 择 入 戏 方 式</div>
+    <h2 class="mode-story" id="modeStory"></h2>
+    <div class="mode-author" id="modeAuthor"></div>
+    <div class="mode-tickets">
+      <button class="ticket" id="modeStoryBtn" type="button">
+        <div class="ticket-stub">剧<br>情</div>
+        <div class="ticket-body">
+          <div class="ticket-head">
+            <span class="ticket-name">剧情模式</span>
+            <span class="ticket-badge">原著精排</span>
+          </div>
+          <p class="ticket-desc" id="ticketStoryDesc">官方授权原著 + 精排演的分支剧本。你的抉择决定走向，解锁不同结局与成就。</p>
+        </div>
+      </button>
+      <button class="ticket" id="modeAiBtn" type="button">
+        <div class="ticket-stub alt">AI<br>绎</div>
+        <div class="ticket-body">
+          <div class="ticket-head">
+            <span class="ticket-name">AI 演绎</span>
+            <span class="ticket-badge live" id="ticketAiCount">AI 状态读取中</span>
+          </div>
+          <p class="ticket-desc" id="ticketAiDesc">AI 实时即兴演绎：你说的每句话都真正影响角色态度与剧情走向。</p>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 开局前置介绍（背景故事 + 角色介绍） -->
+<div class="prologue-overlay" id="prologueOverlay" role="dialog" aria-modal="true" aria-labelledby="prologueStory">
+  <div class="prologue-card">
+    <div class="prologue-kicker">入 戏 手 册</div>
+    <h2 class="prologue-story" id="prologueStory"></h2>
+    <div class="prologue-author" id="prologueAuthor"></div>
+    <div class="prologue-section">
+      <div class="prologue-label">背 景 故 事</div>
+      <p class="prologue-text" id="prologueBg"></p>
+    </div>
+    <div class="prologue-section">
+      <div class="prologue-label">你 将 扮 演</div>
+      <p class="prologue-text" id="prologueRole"></p>
+    </div>
+    <div class="prologue-hint" id="prologueTip"></div>
+    <button class="btn primary prologue-enter" id="btnEnterPlay">开 演</button>
+  </div>
+</div>
+
+<!-- 存档戏折（继续上次故事 + 5 档管理） -->
+<div class="save-overlay" id="saveOverlay" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+  <div class="save-card">
+    <div class="save-kicker">存 档 戏 折</div>
+    <h2 class="save-title" id="saveTitle">继 续 上 次 故 事</h2>
+    <button class="save-resume" id="saveResumeBtn"></button>
+    <div class="save-slots" id="saveSlots"></div>
+    <button class="save-close" id="saveClose">先 不 用 了</button>
+  </div>
+</div>
+
+<!-- 飘字层 -->
+<div class="float-hints" id="floatHints"></div>
+
+<!-- 开幕大幕（进戏/幕间转场） -->
+<div class="curtain" id="curtain">
+  <div class="curtain-wing left"></div>
+  <div class="curtain-wing right"></div>
+  <div class="curtain-card">
+    <div class="curtain-label"></div>
+    <div class="curtain-sub"></div>
+  </div>
+</div>
+
+<!-- 退场确认 -->
+<div class="quit-overlay" id="quitOverlay">
+  <div class="quit-card">
+    <div class="quit-title">要 退 场 了 吗 ？</div>
+    <p class="quit-note">这一幕的进度已经收进戏折，下次进来随时接着演。</p>
+    <div class="quit-actions">
+      <button class="btn" id="quitStay">继续看戏</button>
+      <button class="btn primary" id="quitYes">确认退场</button>
+    </div>
+  </div>
+</div>
+
+<!-- 首次访客引导 -->
+<div class="guide-overlay" id="guideOverlay">
+  <div class="guide-card">
+    <div class="guide-kicker">入 戏 须 知</div>
+    <div class="guide-steps">
+      <div class="guide-step"><span class="guide-ico">🌙</span><b>换心情</b><p>右上角「夜读／素笺」随时切换剧场氛围</p></div>
+      <div class="guide-step"><span class="guide-ico">📖</span><b>集图鉴</b><p>每本戏的结局与成就都收在图鉴里，多结局等你翻牌</p></div>
+      <div class="guide-step"><span class="guide-ico">🎭</span><b>AI 演绎</b><p>带 ✦ 标记的戏支持 AI 实时演绎：你说的每句话都改写剧情</p></div>
+    </div>
+    <button class="btn primary guide-enter" id="guideEnter">知 道 了，开 戏</button>
+  </div>
+</div>
+
+<!-- 看山悬浮按钮 + 答疑面板 -->
+<button class="kanshan-fab" id="kanshanFab" title="问看山（知乎直答）" aria-label="打开看山答疑">
+  <svg viewBox="0 0 64 64" width="30" height="30"><rect x="10" y="20" width="44" height="30" rx="10" fill="#0a6cff"/><circle cx="24" cy="34" r="4" fill="#fff"/><circle cx="40" cy="34" r="4" fill="#fff"/><path d="M18 20 Q22 6 32 10 Q42 6 46 20" fill="#0a6cff"/><path d="M46 22 L58 14 L52 28 Z" fill="#0a6cff"/></svg>
+  <span class="kanshan-tip">问看山</span>
+</button>
+<div class="kanshan-panel" id="kanshanPanel" role="dialog" aria-modal="false" aria-labelledby="kanshanTitle">
+  <div class="kanshan-head">
+    <b id="kanshanTitle">看山</b>
+    <span id="kanshanStatus">正在检查直答状态…</span>
+    <button class="kanshan-close" id="kanshanClose" type="button" aria-label="关闭看山">✕</button>
+  </div>
+  <div class="kanshan-log" id="kanshanLog">
+    <div class="kanshan-msg bot" id="kanshanIntro">我是看山。卡关、看不懂伏笔、想知道背景设定，都可以问我。</div>
+  </div>
+  <div class="kanshan-input">
+    <input type="text" id="kanshanInput" maxlength="100" placeholder="比如：这本书里的反转是什么套路？">
+    <button id="kanshanSend" type="button">问</button>
+  </div>
+</div>
+
+<!-- 结局卡遮罩 -->
+<div class="ending-overlay" id="endingOverlay" role="dialog" aria-modal="true" aria-labelledby="endingName">
+  <div class="ending-card">
+    <div class="ending-cover">
+      <img id="endingCover" alt="" decoding="async">
+      <div class="ending-badge">— 结 局 达 成 —</div>
+    </div>
+    <div class="ending-body">
+      <div class="ending-name" id="endingName">…</div>
+      <p class="ending-quote" id="endingQuote"></p>
+      <div class="ending-trail">
+        <div class="ending-trail-title">你 的 入 戏 轨 迹</div>
+        <div id="endingTrail"></div>
+        <div class="ending-ach" id="endingAch"></div>
+      </div>
+      <div class="ending-actions">
+        <button class="btn" id="btnReplay" type="button">回到大厅</button>
+        <button class="btn" id="btnRetry" type="button">再走一条路</button>
+        <button class="btn" id="btnOpenCodex" type="button">查看图鉴</button>
+        <button class="btn primary" id="btnSaveCard">保存结局卡</button>
+      </div>
+      <div class="ending-watermark">入戏 · 知乎故事互动剧场 ｜ 原著改编 + AI 续写</div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/sound.js"></script>
+<script src="/js/hall.js"></script>
+<script src="/js/codex.js"></script>
+<script src="/js/game.js"></script>
+<script src="/js/game-ai.js"></script>
+<script src="/js/saves.js"></script>
+<script src="/js/kanshan.js"></script>
+<script src="/js/ending.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# .dockerignore
+.env
+node_modules
+data/analytics
+data/plays_backup_*
+data/stories
+scripts
+docs
+*.png
+*.log
+入戏-离线分享版.html
+.git

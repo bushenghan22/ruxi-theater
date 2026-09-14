@@ -1,0 +1,1154 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="night">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="入戏 · 知乎故事互动剧场大厅重构预览">
+  <title>入戏 · 大厅重构预览</title>
+  <style>
+    :root {
+      --bg: #0a0b10;
+      --bg-deep: #07080c;
+      --surface: #12151d;
+      --surface-2: #181c26;
+      --surface-3: #202532;
+      --text: #f3eee4;
+      --text-2: #b9bdc8;
+      --text-3: #848a9a;
+      --text-4: #555b6b;
+      --line: rgba(224, 185, 130, .18);
+      --line-strong: rgba(224, 185, 130, .4);
+      --accent: #d7a36f;
+      --accent-hi: #f0c996;
+      --accent-soft: rgba(215, 163, 111, .13);
+      --red: #bc5a4f;
+      --ok: #91ae8b;
+      --radius: 18px;
+      --radius-sm: 11px;
+      --shadow: 0 18px 50px rgba(0,0,0,.32);
+      --display: "Noto Serif SC", "Source Han Serif SC", "STZhongsong", "SimSun", serif;
+      --ui: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      --ease: cubic-bezier(.22, 1, .36, 1);
+    }
+    @property --gold-angle {
+      syntax: "<angle>";
+      inherits: false;
+      initial-value: 0deg;
+    }
+
+    :root[data-theme="paper"] {
+      --bg: #f0eadf;
+      --bg-deep: #e7dfd0;
+      --surface: #faf6ee;
+      --surface-2: #f5efe4;
+      --surface-3: #ebe1d1;
+      --text: #2f2a23;
+      --text-2: #5a5144;
+      --text-3: #817866;
+      --text-4: #aaa08e;
+      --line: rgba(99, 79, 51, .18);
+      --line-strong: rgba(99, 79, 51, .42);
+      --accent: #a94439;
+      --accent-hi: #bb5c4e;
+      --accent-soft: rgba(169, 68, 57, .1);
+      --red: #9f3e35;
+      --ok: #64845d;
+      --shadow: 0 18px 45px rgba(92, 72, 45, .16);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(ellipse 70% 45% at 50% -12%, var(--accent-soft), transparent 72%),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--display);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      opacity: .55;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.75' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+    img { max-width: 100%; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 84%, transparent);
+      backdrop-filter: blur(18px);
+    }
+    .topbar-inner {
+      width: min(1280px, calc(100% - 48px));
+      min-height: 70px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      min-width: max-content;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .seal {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 9px;
+      color: var(--bg);
+      background: linear-gradient(145deg, var(--accent-hi), var(--accent) 58%, #875235);
+      box-shadow: 0 0 24px var(--accent-soft), inset 0 1px rgba(255,255,255,.38);
+      font-size: 20px;
+      font-weight: 900;
+      transform: rotate(-4deg);
+    }
+    .brand-copy { display: grid; line-height: 1.1; }
+    .brand-name { font-size: 20px; font-weight: 900; letter-spacing: 4px; }
+    .brand-sub { margin-top: 5px; color: var(--text-4); font: 10px/1 var(--ui); letter-spacing: 2px; }
+    .topnav {
+      display: flex;
+      align-items: center;
+      gap: 21px;
+      margin-left: 18px;
+      font: 13px var(--ui);
+    }
+    .topnav a {
+      position: relative;
+      padding: 8px 0;
+      color: var(--text-3);
+      text-decoration: none;
+      transition: color .25s ease;
+    }
+    .topnav a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 100%;
+      bottom: 1px;
+      height: 1px;
+      background: var(--accent);
+      transition: right .3s var(--ease);
+    }
+    .topnav a:hover, .topnav a.active { color: var(--accent-hi); }
+    .topnav a:hover::after, .topnav a.active::after { right: 0; }
+    .top-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .icon-btn, .theme-btn {
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text-3);
+      cursor: pointer;
+      transition: transform .25s var(--ease), color .25s ease, border-color .25s ease, background .25s ease;
+    }
+    .icon-btn:hover, .theme-btn:hover { color: var(--accent-hi); border-color: var(--line-strong); transform: translateY(-2px); }
+    .icon-btn svg, .theme-btn svg { width: 18px; height: 18px; }
+    .theme-pair {
+      display: flex;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+    }
+    .theme-btn { min-width: 38px; min-height: 38px; border-color: transparent; background: transparent; }
+    .theme-btn.active { color: var(--accent-hi); background: var(--accent-soft); }
+
+    .shell { width: min(1280px, calc(100% - 48px)); margin: auto; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--accent);
+      font: 11px var(--ui);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 25px;
+      height: 1px;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, .93fr) minmax(440px, 1.07fr);
+      gap: clamp(38px, 7vw, 100px);
+      align-items: center;
+      min-height: 610px;
+      padding: 72px 0 64px;
+    }
+    .hero-copy { animation: rise .65s var(--ease) both; }
+    .hero h1 {
+      max-width: 650px;
+      margin: 22px 0 18px;
+      font-size: clamp(42px, 5.7vw, 76px);
+      line-height: 1.15;
+      letter-spacing: -3px;
+      font-weight: 900;
+    }
+    .hero h1 em {
+      color: var(--accent-hi);
+      font-style: normal;
+      text-shadow: 0 0 25px var(--accent-soft);
+    }
+    .hero-lede {
+      max-width: 550px;
+      margin: 0;
+      color: var(--text-2);
+      font-size: 17px;
+      line-height: 1.95;
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 30px; }
+    .btn {
+      min-height: 46px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 10px 19px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--text-2);
+      font: 13px var(--ui);
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: transform .25s var(--ease), border-color .25s ease, color .25s ease, background .25s ease, box-shadow .25s ease;
+    }
+    .btn:hover { transform: translateY(-2px); border-color: var(--accent); color: var(--text); }
+    .btn.primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--accent-hi), var(--accent));
+      color: var(--bg);
+      font-weight: 700;
+      box-shadow: 0 9px 26px var(--accent-soft);
+    }
+    .btn.primary:hover { box-shadow: 0 12px 33px var(--accent-soft); filter: brightness(1.06); }
+    .btn svg { width: 16px; height: 16px; }
+    .hero-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 26px;
+      margin-top: 42px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+    .hero-stat strong { display: block; color: var(--accent-hi); font: 700 25px var(--display); }
+    .hero-stat span { color: var(--text-4); font: 11px var(--ui); letter-spacing: 1px; }
+    .hero-note {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+    .micro-tag {
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--text-3);
+      font: 11px var(--ui);
+    }
+
+    .hero-stage {
+      position: relative;
+      min-height: 480px;
+      display: grid;
+      place-items: center;
+      animation: rise .75s .1s var(--ease) both;
+    }
+    .hero-stage::after {
+      content: "";
+      position: absolute;
+      width: 62%;
+      height: 62%;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      transform: rotate(-18deg) scaleY(.58);
+      opacity: .48;
+      pointer-events: none;
+    }
+    .gold-dust { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    .gold-dust i {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--accent-hi);
+      box-shadow: 0 0 12px var(--accent-hi);
+      opacity: 0;
+      animation: dustFloat 5s ease-in-out infinite;
+    }
+    .gold-dust i:nth-child(1) { left: 13%; top: 25%; animation-delay: -.8s; }
+    .gold-dust i:nth-child(2) { left: 78%; top: 18%; animation-delay: -2.2s; transform: scale(.7); }
+    .gold-dust i:nth-child(3) { left: 85%; top: 65%; animation-delay: -3.7s; transform: scale(.8); }
+    .gold-dust i:nth-child(4) { left: 23%; top: 78%; animation-delay: -1.8s; transform: scale(.55); }
+    .gold-dust i:nth-child(5) { left: 8%; top: 54%; animation-delay: -4.1s; transform: scale(.65); }
+    .hero-stage::before {
+      content: "";
+      position: absolute;
+      width: 76%;
+      height: 76%;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      filter: blur(60px);
+      opacity: .7;
+    }
+    .feature {
+      position: relative;
+      width: min(100%, 510px);
+      min-height: 462px;
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      isolation: isolate;
+      transform: rotate(1.4deg);
+      transition: transform .5s var(--ease), box-shadow .5s ease;
+    }
+    .feature::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      z-index: 5;
+      padding: 1.5px;
+      border-radius: inherit;
+      background: conic-gradient(
+        from var(--gold-angle),
+        transparent 0deg 28deg,
+        color-mix(in srgb, var(--accent-hi) 96%, transparent) 42deg,
+        color-mix(in srgb, var(--accent) 64%, transparent) 62deg,
+        transparent 92deg 190deg,
+        color-mix(in srgb, var(--accent-hi) 64%, transparent) 225deg,
+        transparent 270deg 360deg
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      pointer-events: none;
+      animation: goldOrbit 8s linear infinite;
+    }
+    .feature:hover { transform: rotate(0deg) translateY(-5px); box-shadow: 0 25px 70px rgba(0,0,0,.42), 0 0 28px var(--accent-soft); }
+    .feature::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(3,4,8,.03) 18%, rgba(3,4,8,.08) 36%, var(--surface) 94%);
+    }
+    .feature-cover { width: 100%; height: 335px; display: block; object-fit: cover; filter: saturate(.9) contrast(1.02); }
+    .feature-rail {
+      position: absolute;
+      top: 22px;
+      left: 20px;
+      z-index: 2;
+      writing-mode: vertical-rl;
+      color: var(--accent-hi);
+      font: 11px var(--ui);
+      letter-spacing: 4px;
+    }
+    .feature-meta {
+      position: absolute;
+      top: 19px;
+      right: 18px;
+      z-index: 2;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .badge {
+      padding: 5px 9px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: rgba(10,11,16,.5);
+      color: var(--accent-hi);
+      backdrop-filter: blur(8px);
+      font: 10px var(--ui);
+      letter-spacing: 1px;
+    }
+    :root[data-theme="paper"] .badge { background: rgba(250,246,238,.65); color: var(--accent); }
+    .feature-body { position: absolute; right: 0; bottom: 0; left: 0; z-index: 2; padding: 24px 26px 23px; }
+    .feature-kicker { color: var(--text-3); font: 11px var(--ui); letter-spacing: 2px; }
+    .feature h2 { margin: 7px 0 4px; font-size: 25px; line-height: 1.4; }
+    .feature p { max-width: 410px; margin: 0; color: var(--text-2); font-size: 13px; line-height: 1.75; }
+    .feature-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 17px; }
+    .feature-author { color: var(--text-3); font: 11px var(--ui); }
+    .feature-enter {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent-hi);
+      font: 12px var(--ui);
+      letter-spacing: 1px;
+    }
+    .feature-enter svg { width: 15px; }
+    .orbit-note {
+      position: absolute;
+      right: -13px;
+      bottom: 27px;
+      z-index: 3;
+      width: 152px;
+      padding: 13px;
+      border: 1px solid var(--line-strong);
+      border-radius: 13px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      box-shadow: var(--shadow);
+      transform: rotate(-4deg);
+      backdrop-filter: blur(12px);
+    }
+    .orbit-note span { color: var(--accent); font: 10px var(--ui); letter-spacing: 2px; }
+    .orbit-note strong { display: block; margin-top: 5px; font-size: 13px; line-height: 1.55; }
+    .orbit-note small { display: block; margin-top: 5px; color: var(--text-3); font: 10px/1.6 var(--ui); }
+
+    .resume {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 17px;
+      margin-bottom: 67px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--surface) 82%, transparent);
+      animation: rise .8s .2s var(--ease) both;
+    }
+    .resume-mark { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px var(--accent); }
+    .resume-copy { flex: 1; min-width: 0; color: var(--text-2); font: 12px var(--ui); }
+    .resume-copy strong { color: var(--text); }
+    .resume-progress { width: 112px; height: 4px; overflow: hidden; border-radius: 99px; background: var(--surface-3); }
+    .resume-progress i { display: block; width: 42%; height: 100%; background: var(--accent); }
+    .resume .btn { min-height: 36px; padding: 7px 13px; font-size: 11px; }
+
+    .catalog { padding-bottom: 92px; }
+    .catalog-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 30px;
+      margin-bottom: 25px;
+    }
+    .section-kicker { color: var(--text-4); font: 10px var(--ui); letter-spacing: 3px; }
+    .catalog h2 { margin: 7px 0 4px; font-size: clamp(27px, 3vw, 40px); line-height: 1.25; }
+    .catalog-intro { margin: 0; color: var(--text-3); font: 13px var(--ui); }
+    .catalog-tools { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; justify-content: flex-end; }
+    .search {
+      width: 205px;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+    }
+    .search svg { width: 16px; flex: none; color: var(--text-4); }
+    .search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: 12px var(--ui); }
+    .search input::placeholder { color: var(--text-4); }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 27px; }
+    .filter {
+      min-height: 38px;
+      padding: 7px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text-3);
+      font: 12px var(--ui);
+      cursor: pointer;
+      transition: color .25s ease, border-color .25s ease, background .25s ease, transform .25s var(--ease);
+    }
+    .filter:hover { transform: translateY(-2px); color: var(--text); border-color: var(--line-strong); }
+    .filter.active { color: var(--accent-hi); border-color: var(--accent); background: var(--accent-soft); }
+    .story-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+    .story-card {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 9px 30px rgba(0,0,0,.12);
+      cursor: pointer;
+      animation: rise .55s var(--ease) both;
+      transition: transform .35s var(--ease), border-color .35s ease, box-shadow .35s ease;
+    }
+    .story-card::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      z-index: 4;
+      padding: 1px;
+      border-radius: inherit;
+      background: conic-gradient(
+        from var(--gold-angle),
+        transparent 0deg 45deg,
+        color-mix(in srgb, var(--accent-hi) 78%, transparent) 65deg,
+        transparent 98deg 235deg,
+        color-mix(in srgb, var(--accent) 58%, transparent) 270deg,
+        transparent 310deg 360deg
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      opacity: .18;
+      pointer-events: none;
+      animation: goldOrbit 10s linear infinite;
+      transition: opacity .35s ease;
+    }
+    .story-card:hover { transform: translateY(-6px); border-color: var(--line-strong); box-shadow: var(--shadow); }
+    .story-card:hover::before { opacity: .92; }
+    .story-card button {
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+    .story-cover { position: relative; aspect-ratio: 4 / 5; overflow: hidden; }
+    .story-cover img { width: 100%; height: 100%; display: block; object-fit: cover; filter: saturate(.88); transition: transform .6s var(--ease), filter .4s ease; }
+    .story-card:hover .story-cover img { transform: scale(1.06); filter: saturate(1); }
+    .story-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 42%, var(--surface) 100%); }
+    .story-badges { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 7px; }
+    .story-badge { padding: 4px 8px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #f5d6a8; background: rgba(7,8,12,.55); backdrop-filter: blur(8px); font: 10px var(--ui); }
+    .story-badge.ai { color: #101116; border-color: transparent; background: var(--accent-hi); font-weight: 700; }
+    :root[data-theme="paper"] .story-badge { color: var(--accent); background: rgba(250,246,238,.68); border-color: var(--line); }
+    :root[data-theme="paper"] .story-badge.ai { color: #fff; background: var(--accent); }
+    .story-body { position: relative; z-index: 2; margin-top: -30px; padding: 0 16px 17px; }
+    .story-title { min-height: 48px; margin: 0; color: var(--text); font-size: 17px; line-height: 1.45; }
+    .story-meta { margin-top: 6px; color: var(--text-3); font: 11px var(--ui); }
+    .story-desc { display: -webkit-box; overflow: hidden; margin: 9px 0 0; color: var(--text-2); font: 12px/1.75 var(--ui); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .story-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 11px; border-top: 1px solid var(--line); }
+    .story-count { color: var(--text-4); font: 10px var(--ui); }
+    .story-cta { display: inline-flex; align-items: center; gap: 5px; color: var(--accent-hi); font: 11px var(--ui); letter-spacing: 1px; }
+    .story-cta svg { width: 14px; transition: transform .25s var(--ease); }
+    .story-card:hover .story-cta svg { transform: translateX(4px); }
+    .empty { grid-column: 1 / -1; padding: 70px 20px; border: 1px dashed var(--line); border-radius: var(--radius); text-align: center; color: var(--text-3); font: 13px var(--ui); }
+    .provenance { padding: 25px 0 48px; color: var(--text-4); text-align: center; font: 11px var(--ui); letter-spacing: 1px; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(5,6,10,.72);
+      backdrop-filter: blur(18px);
+    }
+    .modal.open { display: grid; animation: fade .25s ease both; }
+    .modal-card {
+      position: relative;
+      width: min(620px, 100%);
+      max-height: min(760px, 90dvh);
+      overflow: auto;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      animation: modalIn .45s var(--ease) both;
+    }
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 3;
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--surface) 74%, transparent);
+      color: var(--text-2);
+      cursor: pointer;
+    }
+    .modal-close svg { width: 17px; }
+    .mode-head { display: grid; grid-template-columns: 120px 1fr; gap: 19px; align-items: center; padding: 28px 28px 20px; }
+    .mode-cover { width: 120px; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 11px; box-shadow: 0 10px 24px rgba(0,0,0,.28); }
+    .mode-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .mode-label { color: var(--accent); font: 10px var(--ui); letter-spacing: 3px; }
+    .mode-head h2 { margin: 8px 0 5px; font-size: 25px; line-height: 1.45; }
+    .mode-author { color: var(--text-3); font: 12px var(--ui); }
+    .mode-copy { margin: 0 28px; padding: 13px 15px; border-left: 2px solid var(--accent); background: linear-gradient(90deg, var(--accent-soft), transparent); color: var(--text-2); font: 13px/1.8 var(--ui); }
+    .mode-list { display: grid; gap: 11px; padding: 19px 28px 28px; }
+    .mode-option {
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      gap: 13px;
+      align-items: center;
+      min-height: 98px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface-2);
+      text-align: left;
+      cursor: pointer;
+      transition: transform .3s var(--ease), border-color .3s ease, background .3s ease;
+    }
+    .mode-option:hover { transform: translateY(-3px); border-color: var(--accent); background: var(--surface-3); }
+    .mode-glyph { width: 48px; height: 48px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 12px; color: var(--accent-hi); font-size: 20px; }
+    .mode-option h3 { margin: 0; font-size: 16px; }
+    .mode-option p { margin: 4px 0 0; color: var(--text-3); font: 11px/1.65 var(--ui); }
+    .mode-arrow { color: var(--accent); }
+    .mode-arrow svg { width: 17px; }
+
+    .play-modal .modal-card { width: min(850px, 100%); }
+    .play-top { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 19px 24px; border-bottom: 1px solid var(--line); }
+    .play-title { min-width: 0; color: var(--text-2); font: 13px var(--ui); letter-spacing: 1px; }
+    .play-title strong { color: var(--text); }
+    .act-dots { display: flex; gap: 5px; }
+    .act-dots i { width: 27px; height: 4px; border-radius: 99px; background: var(--surface-3); }
+    .act-dots i.on { background: var(--accent); box-shadow: 0 0 12px var(--accent-soft); }
+    .play-body { max-height: 54dvh; overflow: auto; padding: 22px 24px 18px; }
+    .play-intro { padding: 12px 15px; border: 1px solid var(--line); border-radius: 12px; background: var(--accent-soft); color: var(--accent-hi); font: 12px/1.8 var(--ui); }
+    .play-log { display: flex; flex-direction: column; gap: 13px; margin-top: 16px; }
+    .line { max-width: 80%; animation: rise .38s var(--ease) both; }
+    .line.narration { max-width: 100%; padding: 11px 14px; border-left: 2px solid var(--accent); background: linear-gradient(90deg, var(--accent-soft), transparent); color: var(--text-3); font-size: 13px; }
+    .line.mine { align-self: flex-end; }
+    .speaker { display: inline-block; margin: 0 0 -8px 12px; padding: 3px 10px; border: 1px solid var(--line-strong); border-radius: 7px 7px 0 7px; background: var(--surface); color: var(--accent-hi); font-size: 12px; }
+    .line.mine .speaker { margin-left: 0; margin-right: 12px; border-radius: 7px 7px 7px 0; }
+    .bubble { padding: 12px 15px; border: 1px solid var(--line-strong); border-radius: 3px 13px 13px 13px; background: color-mix(in srgb, var(--surface-2) 92%, transparent); color: var(--text-2); font-size: 14px; line-height: 1.8; }
+    .line.mine .bubble { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+    .choices { display: grid; gap: 8px; margin-top: 16px; }
+    .choice {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      width: 100%;
+      min-height: 48px;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--surface-2);
+      color: var(--text-2);
+      text-align: left;
+      cursor: pointer;
+      font-size: 13px;
+      transition: transform .25s var(--ease), border-color .25s ease, background .25s ease;
+    }
+    .choice:hover { transform: translateX(4px); border-color: var(--accent); color: var(--text); background: var(--surface-3); }
+    .choice b { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 5px; color: var(--accent); font: 11px var(--ui); }
+    .choice.selected { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+    .choice[disabled] { opacity: .5; pointer-events: none; }
+    .play-bottom { display: flex; align-items: center; gap: 10px; padding: 15px 24px 20px; border-top: 1px solid var(--line); }
+    .play-status { flex: 1; color: var(--text-3); font: 11px var(--ui); }
+    .play-status strong { color: var(--accent-hi); }
+    .play-input { display: none; flex: 1; min-width: 0; min-height: 44px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; outline: 0; background: var(--surface-2); color: var(--text); font: 13px var(--ui); }
+    .play-input::placeholder { color: var(--text-4); }
+    .ai-mode .play-input { display: block; }
+    .ai-mode .play-status { display: none; }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 140;
+      max-width: min(380px, calc(100% - 48px));
+      padding: 12px 16px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--accent-hi);
+      box-shadow: var(--shadow);
+      font: 12px var(--ui);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+    }
+    .toast.show { animation: toastIn .3s var(--ease) both; }
+
+    @keyframes goldOrbit { to { --gold-angle: 360deg; } }
+    @keyframes dustFloat {
+      0%, 100% { opacity: 0; transform: translate3d(0, 8px, 0) scale(.75); }
+      25%, 70% { opacity: .7; }
+      50% { opacity: 1; transform: translate3d(7px, -10px, 0) scale(1); }
+    }
+    @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(22px) scale(.97); } to { opacity: 1; transform: none; } }
+    @keyframes toastIn { 0% { opacity: 0; transform: translateY(12px); } 12%, 86% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-5px); } }
+
+    @media (max-width: 1050px) {
+      .hero { grid-template-columns: 1fr 1fr; gap: 30px; }
+      .story-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .topnav { gap: 14px; margin-left: 0; }
+    }
+    @media (max-width: 760px) {
+      .topbar-inner, .shell { width: min(100% - 32px, 620px); }
+      .topbar-inner { min-height: 62px; gap: 13px; }
+      .brand-sub, .topnav { display: none; }
+      .brand-name { font-size: 18px; }
+      .top-actions { gap: 5px; }
+      .theme-pair { order: 3; }
+      .icon-btn { min-width: 42px; min-height: 42px; }
+      .hero { grid-template-columns: 1fr; min-height: 0; padding: 55px 0 34px; }
+      .hero h1 { font-size: clamp(42px, 12vw, 64px); letter-spacing: -2px; }
+      .hero-lede { font-size: 15px; }
+      .hero-stage { min-height: 405px; margin-top: 22px; }
+      .feature { min-height: 400px; transform: rotate(.7deg); }
+      .feature-cover { height: 285px; }
+      .orbit-note { right: -5px; bottom: 10px; }
+      .resume { align-items: flex-start; flex-wrap: wrap; margin-bottom: 47px; }
+      .resume-copy { flex-basis: calc(100% - 24px); }
+      .resume-progress { margin-left: 22px; }
+      .catalog-head { display: block; }
+      .catalog-tools { justify-content: flex-start; margin-top: 17px; }
+      .story-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .story-body { padding: 0 12px 13px; }
+      .story-title { min-height: 44px; font-size: 15px; }
+      .story-desc { font-size: 11px; }
+      .story-count { font-size: 9px; }
+      .mode-head { grid-template-columns: 88px 1fr; padding: 22px 19px 15px; gap: 13px; }
+      .mode-cover { width: 88px; }
+      .mode-head h2 { font-size: 20px; }
+      .mode-copy { margin: 0 19px; }
+      .mode-list { padding: 16px 19px 21px; }
+      .play-top, .play-body, .play-bottom { padding-left: 16px; padding-right: 16px; }
+      .play-title { font-size: 11px; }
+      .act-dots { display: none; }
+      .line { max-width: 92%; }
+    }
+    @media (max-width: 440px) {
+      .hero-actions .btn { width: 100%; }
+      .hero-stats { gap: 17px; }
+      .hero-stat strong { font-size: 22px; }
+      .hero-stage { min-height: 370px; }
+      .feature { min-height: 370px; }
+      .feature-cover { height: 250px; }
+      .feature-body { padding: 20px 18px; }
+      .feature h2 { font-size: 21px; }
+      .orbit-note { width: 132px; padding: 10px; }
+      .search { width: 100%; }
+      .story-badges { top: 8px; left: 8px; right: 8px; }
+      .story-badge { padding: 3px 6px; font-size: 9px; }
+      .story-title { font-size: 14px; }
+      .story-meta { font-size: 10px; }
+      .story-foot { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .mode-option { grid-template-columns: 43px 1fr auto; padding: 11px; }
+      .mode-glyph { width: 40px; height: 40px; font-size: 17px; }
+      .mode-option h3 { font-size: 14px; }
+      .mode-option p { font-size: 10px; }
+      .play-bottom { flex-wrap: wrap; }
+      .play-input { flex-basis: calc(100% - 55px); }
+      .play-bottom .btn { min-width: 45px; padding: 8px 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      .feature, .story-card { transform: none !important; }
+      .gold-dust { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#top" aria-label="回到入戏大厅">
+        <span class="seal" aria-hidden="true">戏</span>
+        <span class="brand-copy">
+          <span class="brand-name">入戏·剧场</span>
+          <span class="brand-sub">知乎故事互动剧场</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="主导航">
+        <a class="active" href="#catalog">挑一出戏</a>
+        <a href="#ai-stage">AI 片场</a>
+        <a href="#collection">我的图鉴</a>
+      </nav>
+      <div class="top-actions">
+        <button class="icon-btn" id="saveBtn" aria-label="打开存档" title="存档">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h8V4M8 20v-6h8v6"/></svg>
+        </button>
+        <button class="icon-btn" id="codexBtn" aria-label="打开图鉴" title="图鉴">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 5.5v16M8 7h8M8 11h7"/></svg>
+        </button>
+        <div class="theme-pair" aria-label="切换主题">
+          <button class="theme-btn active" data-theme="night" aria-label="夜读主题" title="夜读">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5z"/></svg>
+          </button>
+          <button class="theme-btn" data-theme="paper" aria-label="素笺主题" title="素笺">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="shell hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow">知乎盐言故事 · 互动剧场</div>
+        <h1 id="hero-title">你不是在看故事<br><em>你正在改变它</em></h1>
+        <p class="hero-lede">从一篇真实的知乎故事出发，站到命运的岔路口。选择、开口、偏航——每一次入戏，都会留下只属于你的结局。</p>
+        <div class="hero-actions">
+          <button class="btn primary" id="randomBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h3c4 0 5 10 9 10h6M17 4h4v4M21 4l-5 5M3 17h3c1.6 0 2.7-1.1 3.5-2.5M17 20h4v-4M21 20l-4-4"/></svg>
+            随机入戏
+          </button>
+          <a class="btn" href="#catalog">浏览全部剧目 <span>↓</span></a>
+        </div>
+        <div class="hero-stats" aria-label="剧场数据">
+          <div class="hero-stat"><strong>20</strong><span>官方故事</span></div>
+          <div class="hero-stat"><strong>158</strong><span>可抵达结局</span></div>
+          <div class="hero-stat"><strong>192</strong><span>隐藏成就</span></div>
+        </div>
+        <div class="hero-note">
+          <span class="micro-tag">原著事实锚定</span>
+          <span class="micro-tag">多结局收集</span>
+          <span class="micro-tag">AI 即兴片场</span>
+        </div>
+      </div>
+
+      <div class="hero-stage" id="ai-stage">
+        <button class="feature" id="featureBtn" aria-label="打开首推故事">
+          <img class="feature-cover" id="featureCover" src="assets/covers/1654134122145320960.jpg" alt="穿越大明，我被崇祯偷听心声封面">
+          <span class="feature-rail">本 周 首 推</span>
+          <span class="feature-meta"><span class="badge">权谋·穿越</span><span class="badge">AI 可用</span></span>
+          <span class="feature-body">
+            <span class="feature-kicker">FIRST PLAY · 现场推荐</span>
+            <h2 id="featureTitle">穿越大明，我被崇祯偷听心声</h2>
+            <p id="featureDesc">刚穿越，就发现大明要亡。偏偏你心里想的每句话，都被皇帝听见了。</p>
+            <span class="feature-foot">
+              <span class="feature-author">原著 · 凉风有信</span>
+              <span class="feature-enter">打开这出戏 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+            </span>
+          </span>
+        </button>
+        <div class="orbit-note">
+          <span>你将体验</span>
+          <strong>一场可以说出口的心声</strong>
+          <small>点击卡片，先看一眼玩法再决定怎么入戏。</small>
+        </div>
+        <div class="gold-dust" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <section class="shell resume" id="collection" aria-label="继续上次进度">
+      <span class="resume-mark" aria-hidden="true"></span>
+      <div class="resume-copy">上次演到 <strong>《蓝血》</strong> · 第 2 幕 · 回合 07</div>
+      <div class="resume-progress" aria-label="进度 42%"><i></i></div>
+      <button class="btn" id="resumeBtn">继续看戏 →</button>
+    </section>
+
+    <section class="shell catalog" id="catalog" aria-labelledby="catalog-title">
+      <div class="catalog-head">
+        <div>
+          <div class="section-kicker">THE REPERTOIRE</div>
+          <h2 id="catalog-title">今晚演哪一出？</h2>
+          <p class="catalog-intro">每一张海报，都是一扇可以亲自推开的门。</p>
+        </div>
+        <div class="catalog-tools">
+          <label class="search" aria-label="搜索故事">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 5 5"/></svg>
+            <input id="searchInput" type="search" placeholder="搜索标题、题材或作者">
+          </label>
+        </div>
+      </div>
+      <div class="filters" role="tablist" aria-label="故事分类">
+        <button class="filter active" data-filter="全部" role="tab" aria-selected="true">全部剧目</button>
+        <button class="filter" data-filter="AI" role="tab" aria-selected="false">AI 片场</button>
+        <button class="filter" data-filter="悬疑" role="tab" aria-selected="false">悬疑</button>
+        <button class="filter" data-filter="权谋" role="tab" aria-selected="false">权谋</button>
+        <button class="filter" data-filter="甜宠" role="tab" aria-selected="false">甜宠</button>
+        <button class="filter" data-filter="脑洞" role="tab" aria-selected="false">脑洞</button>
+      </div>
+      <div class="story-grid" id="storyGrid" aria-live="polite"></div>
+    </section>
+    <p class="shell provenance">故事内容来自知乎 · 盐言故事（官方授权） · 本页为大厅 UI 重构预览</p>
+  </main>
+
+  <div class="modal" id="modeModal" role="dialog" aria-modal="true" aria-labelledby="modeTitle">
+    <div class="modal-card">
+      <button class="modal-close" data-close="modeModal" aria-label="关闭模式选择">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+      <div class="mode-head">
+        <div class="mode-cover"><img id="modeCover" src="" alt=""></div>
+        <div>
+          <div class="mode-label">选择入戏方式</div>
+          <h2 id="modeTitle">故事标题</h2>
+          <div class="mode-author" id="modeAuthor">原著 · 作者</div>
+        </div>
+      </div>
+      <p class="mode-copy">同一篇故事，两种深度：剧情模式给你经过编排的分支；AI 演绎把你的话变成角色关系的一部分。</p>
+      <div class="mode-list">
+        <button class="mode-option" data-mode="story">
+          <span class="mode-glyph" aria-hidden="true">幕</span>
+          <span><h3>剧情剪辑版</h3><p>原著事实锚定 · 关键节点做选择 · 多结局与成就可收集</p></span>
+          <span class="mode-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+        </button>
+        <button class="mode-option" data-mode="ai">
+          <span class="mode-glyph" aria-hidden="true">即</span>
+          <span><h3>AI 即兴演绎</h3><p>台词直接说 · 信任、危机与真心随你的表达实时变化</p></span>
+          <span class="mode-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal play-modal" id="playModal" role="dialog" aria-modal="true" aria-labelledby="playTitle">
+    <div class="modal-card" id="playCard">
+      <div class="play-top">
+        <div class="play-title" id="playTitle">第 1 幕 · <strong>御书房之夜</strong></div>
+        <div class="act-dots" aria-label="当前第 1 幕"><i class="on"></i><i></i><i></i></div>
+        <button class="modal-close" data-close="playModal" aria-label="关闭剧场">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="play-body">
+        <div class="play-intro" id="playIntro">玩法预览：点击画面可加速；选择会留下轨迹；AI 模式下，你的每句话都会影响关系数值。</div>
+        <div class="play-log" id="playLog" aria-live="polite"></div>
+      </div>
+      <div class="play-bottom">
+        <div class="play-status" id="playStatus">本幕目标：让崇祯至少听进一句真话 · <strong>信任 30</strong></div>
+        <input class="play-input" id="playInput" type="text" maxlength="80" placeholder="对角色说一句话……">
+        <button class="btn primary" id="playSend">开口</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      var fallback = [
+        { work_id: "1654134122145320960", title: "穿越大明，我被崇祯偷听心声", author: "凉风有信", labels: ["权谋", "脑洞", "穿越"], tagline: "权谋·穿越", cover: "assets/covers/1654134122145320960.jpg", intro: "刚穿越，就发现大明要亡。偏偏你心里想的每句话，都被皇帝听见了。", ai: true, endings: 8 },
+        { work_id: "2025684191967294692", title: "蓝血", author: "桃花先生", labels: ["悬疑", "惊悚", "反转"], tagline: "悬疑·反转", cover: "assets/covers/2025684191967294692.jpg", intro: "我发现这个世界不对劲，这里的人说，血是蓝的。", ai: false, endings: 7 },
+        { work_id: "2025333783608537435", title: "同时被两个精神病追杀", author: "写小说的秃头老张", labels: ["悬疑", "惊悚", "脑洞"], tagline: "惊悚·病娇", cover: "assets/covers/2025333783608537435.jpg", intro: "一个因为爱我，一个因为恨我——我同时成了他们的目标。", ai: false, endings: 11 },
+        { work_id: "1981680284933063553", title: "网恋对象真是霸总", author: "北瓜", labels: ["甜宠", "脑洞"], tagline: "甜宠·沙雕", cover: "assets/covers/1981680284933063553.jpg", intro: "不是在玩抽象吗？你们怎么真有实力啊。", ai: false, endings: 9 },
+        { work_id: "1617220591035113472", title: "西游之众佛腐烂", author: "杀不死的林海仙", labels: ["悬疑", "脑洞"], tagline: "西游·克苏鲁", cover: "assets/covers/1617220591035113472.jpg", intro: "西天取经就是一场恐怖的阴谋，灵山正在腐烂。", ai: true, endings: 8 },
+        { work_id: "1930445234262750503", title: "俺妈和她的丧尸闺女", author: "归像", labels: ["治愈", "脑洞"], tagline: "现实·治愈", cover: "assets/covers/1930445234262750503.jpg", intro: "俺闺女不是丧尸，她只是还想回家。", ai: true, endings: 11 },
+        { work_id: "1760265980192886784", title: "学科修仙", author: "六酒", labels: ["脑洞", "沙雕"], tagline: "沙雕·修仙", cover: "assets/covers/1760265980192886784.jpg", intro: "这个修仙世界，靠语数外和物化生飞升。", ai: true, endings: 8 },
+        { work_id: "2050600604976803918", title: "不提分就出不去的房间", author: "灯灯", labels: ["甜宠", "校园"], tagline: "校园·甜宠", cover: "assets/covers/2050600604976803918.jpg", intro: "讨厌我的年级第一，和我被关在了一起。", ai: true, endings: 9 }
+      ];
+      var stories = fallback.slice();
+      var selectedFilter = "全部";
+      var selectedStory = stories[0];
+      var mode = "story";
+      var trust = 30;
+      var turn = 0;
+      var $ = function (s) { return document.querySelector(s); };
+      var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+      function assetUrl(url) {
+        if (!url) return "";
+        if (location.protocol === "file:" && url.indexOf("/") === 0) return url.slice(1);
+        return url;
+      }
+
+      function esc(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+          return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c];
+        });
+      }
+      function arrow() {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h13M13 6l6 6-6 6"/></svg>';
+      }
+      function renderCards() {
+        var query = ($("#searchInput").value || "").trim().toLowerCase();
+        var list = stories.filter(function (s) {
+          var hitFilter = selectedFilter === "全部" || (selectedFilter === "AI" ? s.ai : s.labels.indexOf(selectedFilter) >= 0);
+          var text = (s.title + s.author + s.labels.join("")).toLowerCase();
+          return hitFilter && (!query || text.indexOf(query) >= 0);
+        });
+        $("#storyGrid").innerHTML = list.length ? list.map(function (s, i) {
+          return '<article class="story-card" style="animation-delay:' + (i * .045) + 's">' +
+            '<button class="story-open" data-id="' + esc(s.work_id) + '" aria-label="打开《' + esc(s.title) + '》">' +
+              '<div class="story-cover">' +
+                '<div class="story-badges"><span class="story-badge">' + esc(s.tagline || s.labels[0]) + '</span>' + (s.ai ? '<span class="story-badge ai">AI</span>' : '') + '</div>' +
+                '<img src="' + esc(assetUrl(s.cover)) + '" alt="' + esc(s.title) + '封面" loading="lazy">' +
+              '</div>' +
+              '<div class="story-body">' +
+                '<h3 class="story-title">' + esc(s.title) + '</h3>' +
+                '<div class="story-meta">作者 · ' + esc(s.author) + '</div>' +
+                '<p class="story-desc">' + esc(s.intro) + '</p>' +
+                '<div class="story-foot"><span class="story-count">' + esc(s.endings || 7) + ' 个可抵达结局</span><span class="story-cta">入戏 ' + arrow() + '</span></div>' +
+              '</div>' +
+            '</button>' +
+          '</article>';
+        }).join("") : '<div class="empty">没有找到这出戏。换个关键词，或者让命运替你随机一次。</div>';
+        $$(".story-open").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-id");
+            selectedStory = stories.find(function (s) { return s.work_id === id; }) || stories[0];
+            openMode(selectedStory);
+          });
+        });
+      }
+      function openMode(story) {
+        $("#modeCover").src = assetUrl(story.cover);
+        $("#modeCover").alt = story.title + "封面";
+        $("#modeTitle").textContent = "《" + story.title + "》";
+        $("#modeAuthor").textContent = "原著 · " + story.author + (story.ai ? " ｜ AI 演绎可用" : "");
+        $("#modeModal").classList.add("open");
+        document.body.style.overflow = "hidden";
+        $(".mode-option").focus();
+      }
+      function closeModal(id) {
+        $("#" + id).classList.remove("open");
+        if (!$(".modal.open")) document.body.style.overflow = "";
+      }
+      function toast(message) {
+        var el = $("#toast");
+        el.textContent = message;
+        el.classList.remove("show");
+        void el.offsetWidth;
+        el.classList.add("show");
+        window.clearTimeout(toast.timer);
+        toast.timer = window.setTimeout(function () { el.classList.remove("show"); }, 2600);
+      }
+      function addLine(kind, speaker, text) {
+        var log = $("#playLog");
+        var node = document.createElement("div");
+        node.className = "line " + kind;
+        if (kind === "narration") node.textContent = text;
+        else node.innerHTML = '<span class="speaker">' + esc(speaker) + '</span><div class="bubble">' + esc(text) + '</div>';
+        log.appendChild(node);
+        log.parentElement.scrollTop = log.parentElement.scrollHeight;
+      }
+      function resetPlay() {
+        trust = 30;
+        turn = 0;
+        $("#playLog").innerHTML = "";
+        $("#playStatus").innerHTML = "本幕目标：让崇祯至少听进一句真话 · <strong>信任 30</strong>";
+        addLine("narration", "", "—— 第一幕 · 御书房之夜 ——");
+        addLine("narration", "", "烛火在案头轻轻一晃。你知道，接下来每一句话都可能改变这场戏的方向。");
+        addLine("npc", "崇祯", "（朱笔一顿）昨夜三更，你在心里喊的那句话——再说与朕听一遍。");
+        if (mode === "story") {
+          var wrap = document.createElement("div");
+          wrap.className = "choices";
+          wrap.id = "choices";
+          wrap.innerHTML = '<button class="choice" data-trust="-4"><b>1</b><span>【跪下求饶】臣、臣罪该万死……</span></button>' +
+            '<button class="choice" data-trust="8"><b>2</b><span>【心声】完了，这位爷比史书上还难糊弄。</span></button>' +
+            '<button class="choice" data-trust="4"><b>3</b><span>【试探】陛下若真听见了，就该知道我不是在胡说。</span></button>';
+          $("#playLog").appendChild(wrap);
+          $$(".choice").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              $$(".choice").forEach(function (b) { b.disabled = true; });
+              btn.classList.add("selected");
+              var delta = Number(btn.getAttribute("data-trust"));
+              trust = Math.max(0, Math.min(100, trust + delta));
+              turn += 1;
+              addLine("mine", "我", btn.textContent.replace(/^[123]/, "").trim());
+              addLine("npc", "崇祯", delta > 0 ? "（目光在你脸上停了片刻）有意思。你这句话，朕姑且记下了。" : "（冷冷抬眼）求饶没有用，朕要听的是真话。");
+              $("#playStatus").innerHTML = "第 " + turn + " 回合 · 信任 <strong>" + trust + "</strong> · 选择已写入你的入戏轨迹";
+              toast(delta > 0 ? "信任 +" + delta + " · 这句话被记住了" : "信任 " + delta + " · 局面变得更危险");
+              window.setTimeout(function () {
+                $("#playLog").insertAdjacentHTML("beforeend", '<div class="play-intro">预览提示：下一节点会根据你的选择改变。正式版将在这里继续演出，而不是跳回大厅。</div>');
+              }, 420);
+            });
+          });
+        } else {
+          $("#playStatus").innerHTML = "本幕目标：让角色相信你愿意说真话 · <strong>信任 30</strong>";
+        }
+      }
+      function openPlay(nextMode) {
+        mode = nextMode;
+        closeModal("modeModal");
+        $("#playCard").classList.toggle("ai-mode", mode === "ai");
+        $("#playTitle").innerHTML = (mode === "ai" ? "AI 即兴演绎 · " : "剧情剪辑版 · ") + "<strong>《" + esc(selectedStory.title) + "》</strong>";
+        $("#playIntro").textContent = mode === "ai" ? "AI 模式预览：你说的话会影响信任值，先试着用一句台词改变对方的态度。" : "剧情模式预览：点击选项推进节点；你的选择会写入结局卡。";
+        $("#playSend").textContent = mode === "ai" ? "开口" : "加速";
+        $("#playModal").classList.add("open");
+        document.body.style.overflow = "hidden";
+        resetPlay();
+        if (mode === "ai") $("#playInput").focus();
+      }
+      function sendAi() {
+        var input = $("#playInput");
+        var text = input.value.trim();
+        if (!text) return;
+        input.value = "";
+        turn += 1;
+        addLine("mine", "我", text);
+        var good = /真话|相信|帮|救|合作|愿意|喜欢|对不起/.test(text);
+        var delta = good ? 7 : -3;
+        trust = Math.max(0, Math.min(100, trust + delta));
+        addLine("npc", "崇祯", good ? "（神色稍缓）你终于肯把心里那句话说出来了。朕会看着你接下来怎么做。" : "（指节轻叩桌面）巧言令色。你以为朕会这么容易相信你？");
+        $("#playStatus").innerHTML = "第 " + turn + " 回合 · 信任 <strong>" + trust + "</strong> · " + (good ? "关系出现松动" : "危机正在升高");
+        toast(good ? "信任 +7 · 角色态度发生变化" : "信任 -3 · 试试更具体地说真话");
+      }
+
+      $$(".filter").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          selectedFilter = btn.getAttribute("data-filter");
+          $$(".filter").forEach(function (b) { b.classList.toggle("active", b === btn); b.setAttribute("aria-selected", b === btn ? "true" : "false"); });
+          renderCards();
+        });
+      });
+      $("#searchInput").addEventListener("input", renderCards);
+      $("#featureBtn").addEventListener("click", function () { openMode(stories[0]); });
+      $("#randomBtn").addEventListener("click", function () {
+        selectedStory = stories[Math.floor(Math.random() * stories.length)];
+        openMode(selectedStory);
+        toast("命运抽中了《" + selectedStory.title + "》");
+      });
+      $("#resumeBtn").addEventListener("click", function () { openMode(stories[1]); toast("已打开上次排演的入口"); });
+      $("#playSend").addEventListener("click", function () {
+        if (mode === "ai") sendAi();
+        else toast("点击上方选项即可推进；再次点击画面可加速演出");
+      });
+      $("#playInput").addEventListener("keydown", function (event) { if (event.key === "Enter") sendAi(); });
+      $$(".modal-close").forEach(function (btn) { btn.addEventListener("click", function () { closeModal(btn.getAttribute("data-close")); }); });
+      $$(".mode-option").forEach(function (btn) { btn.addEventListener("click", function () { openPlay(btn.getAttribute("data-mode")); }); });
+      $$(".theme-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          document.documentElement.setAttribute("data-theme", btn.getAttribute("data-theme"));
+          $$(".theme-btn").forEach(function (b) { b.classList.toggle("active", b === btn); });
+        });
+      });
+      $("#saveBtn").addEventListener("click", function () { toast("存档戏折预览：正式版可在这里管理 5 个档位"); });
+      $("#codexBtn").addEventListener("click", function () { toast("图鉴预览：结局与成就会在这里留下印记"); });
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") $$(".modal.open").forEach(function (m) { closeModal(m.id); });
+      });
+
+      fetch("/api/stories").then(function (response) { return response.ok ? response.json() : null; }).then(function (data) {
+        if (!data || !data.stories || !data.stories.length) return;
+        stories = data.stories.slice(0, 12).map(function (s) {
+          var stat = data.stats && data.stats[s.work_id] || {};
+          return Object.assign({}, s, { ai: !!stat.ai, endings: stat.endings || 7, intro: s.intro || "" });
+        });
+        selectedStory = stories[0];
+        $("#featureCover").src = assetUrl(stories[0].cover_large || stories[0].cover);
+        $("#featureCover").alt = stories[0].title + "封面";
+        $("#featureTitle").textContent = stories[0].title;
+        $("#featureDesc").textContent = stories[0].intro || "每一次选择，都会让故事朝另一个方向生长。";
+        renderCards();
+      }).catch(function () {});
+      renderCards();
+    }());
+  </script>
+</body>
+</html>
